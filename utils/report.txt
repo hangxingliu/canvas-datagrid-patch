@@ -1,0 +1,51 @@
+requestAnimationFrame
+initDraw
+drawBackground
+    radiusRect
+    fillRect
+drawGroupArea
+drawFrozenRows
+    drawRow
+drawRows
+    radiusRect
+    drawRow
+    drawCell
+drawActiveCell
+    radiusRect
+    strokeRect
+drawHeaders
+    drawCell
+    radiusRect
+    drawRowHeader
+    drawHeaderColumnRange
+drawFrozenMarkers
+    fillRect
+    strokeRect
+drawSelectionHandles
+    addselectionHandle
+drawReorderMarkers
+    fillRect
+    strokeRect
+    addBorderLine
+drawMoveMarkers
+    addBorderLine
+drawBorder
+    strokeRect
+drawSelectionBorders
+    addBorderLine
+    clipFrozenArea
+drawScrollBars
+    fillRect
+    strokeRect
+    radiusRect
+drawDebug
+    fillArray
+    getFrozenColumnsWidth
+    fillRect
+    fillText
+drawPerfLines
+    fillArray
+    drawPerfLine
+    fillRect
+    isNaN
+    fillText

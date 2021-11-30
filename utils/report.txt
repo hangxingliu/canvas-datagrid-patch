@@ -1,51 +1,68 @@
-requestAnimationFrame
-initDraw
-drawBackground
-    radiusRect
-    fillRect
-drawGroupArea
-drawFrozenRows
-    drawRow
-drawRows
-    radiusRect
-    drawRow
-    drawCell
-drawActiveCell
-    radiusRect
-    strokeRect
-drawHeaders
-    drawCell
-    radiusRect
-    drawRowHeader
-    drawHeaderColumnRange
-drawFrozenMarkers
-    fillRect
-    strokeRect
-drawSelectionHandles
-    addselectionHandle
-drawReorderMarkers
-    fillRect
-    strokeRect
-    addBorderLine
-drawMoveMarkers
-    addBorderLine
-drawBorder
-    strokeRect
-drawSelectionBorders
-    addBorderLine
-    clipFrozenArea
-drawScrollBars
-    fillRect
-    strokeRect
-    radiusRect
-drawDebug
-    fillArray
-    getFrozenColumnsWidth
-    fillRect
-    fillText
-drawPerfLines
-    fillArray
-    drawPerfLine
-    fillRect
-    isNaN
-    fillText
+createHandlesOverlayArray
+createBorderOverlayArray
+drawCell
+   -> fillRect
+   -> strokeRect
+   -> radiusRect
+   -> drawTreeArrow
+   -> drawOrderByArrow
+   -> f
+   -> wrapText
+   -> drawHtml
+   -> drawText
+   -> createBorderOverlayArray
+   -> createHandlesOverlayArray
+drawRowHeader
+   -> drawCell
+drawRow
+   -> drawCell
+2.initDraw
+3.drawBackground
+   -> radiusRect
+   -> fillRect
+4.drawGroupArea
+5.drawFrozenRows
+   -> drawRow
+6.drawRows
+   -> radiusRect
+   -> drawRow
+   -> drawCell
+7.drawActiveCell
+   -> radiusRect
+   -> strokeRect
+8.drawHeaders
+   -> drawCell
+   -> radiusRect
+   -> drawRowHeader
+   -> drawHeaderColumnRange
+9.drawFrozenMarkers
+   -> fillRect
+   -> strokeRect
+10.drawSelectionHandles
+   -> addselectionHandle
+11.drawReorderMarkers
+   -> fillRect
+   -> strokeRect
+   -> addBorderLine
+12.drawMoveMarkers
+   -> addBorderLine
+13.drawBorder
+   -> strokeRect
+14.drawSelectionBorders
+   -> addBorderLine
+   -> clipFrozenArea
+15.drawScrollBars
+   -> fillRect
+   -> strokeRect
+   -> radiusRect
+16.drawDebug
+   -> fillArray
+   -> getFrozenColumnsWidth
+   -> fillRect
+   -> fillText
+17.drawPerfLines
+   -> fillArray
+   -> drawPerfLine
+   -> fillRect
+   -> isNaN
+   -> fillText

@@ -78,15 +78,25 @@ acornWalk.ancestor(nodeDraw, {
 console.log(functionNames)
 // console.log(functionCalls)
 
+
+
 const reports = [];
 const rootCalls = functionCalls.get('');
-for (let i = 0; i < rootCalls.length; i++) {
-  const rootCall = rootCalls[i];
-  reports.push(rootCall)
-  let calls = functionCalls.get(rootCall);
+functionNames.sort((a, b) => {
+  const indexA = rootCalls.indexOf(a);
+  const indexB = rootCalls.indexOf(b);
+  return indexA - indexB;
+})
+for (let i = 0; i < functionNames.length; i++) {
+  const funcName = functionNames[i];
+  const index = rootCalls.indexOf(funcName);
+  if (index >= 0) reports.push(String(index + 1) + '.' + funcName)
+  else reports.push(funcName)
+
+  let calls = functionCalls.get(funcName);
   if (calls && calls.length > 0) {
     calls = Array.from(new Set(calls));
-    reports.push(...calls.map(it => `    ${it}`));
+    reports.push(...calls.map(it => `   -> ${it}`));
   }
 }
 fs.writeFileSync(report, reports.join('\n'))

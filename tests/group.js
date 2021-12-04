@@ -4,6 +4,9 @@ let obj = createTest({});
 doesNotThrow(() => obj.groupColumns('name', 'department'));
 deepStrictEqual(obj.groupedColumns, [[{ from: 0, to: 1, collapsed: false }]]);
 
+doesNotThrow(() => obj.groupColumns('name', 'department'));
+deepStrictEqual(obj.groupedColumns, [[{ from: 0, to: 1, collapsed: false }]]);
+
 doesNotThrow(() => obj.groupColumns('job_titles', 'full_part_time'));
 deepStrictEqual(obj.groupedColumns, [
   [
@@ -103,6 +106,8 @@ function createTest(self) {
       const min = groups[0].from,
         max = groups[groups.length - 1].to;
       if (from <= min && to >= max) {
+        if (from === min && to === max && groups.length === 1)
+          return; // nothings happened
         // new group wrap this row
         continue;
       }

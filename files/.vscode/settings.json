@@ -1,0 +1,14 @@
+{
+  "keywordCompletion.indicator": true,
+  "keywordCompletion.addWordBasedSuggestions": true,
+  "eslint.format.enable": false,
+  "prettier.enable": false,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true,
+    "tutorials/js/*": true,
+    "hangxingliu": true,
+  },
+  "javascript.suggest.names": false
+}

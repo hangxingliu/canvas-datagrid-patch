@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '14'
-          cache: 'npm'
+          # cache: 'npm'
       - run: cd canvas-datagrid && pwd && npm install && npm run build
       - run: cd canvas-datagrid && ls -al dist
       - uses: actions/upload-artifact@v2

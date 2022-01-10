@@ -7,7 +7,7 @@ PROJECT_DIR="${THIS_DIR}/..";
 throw() { echo -e "fatal: $1" >&2; exit 1; }
 cd "$FILES_DIR" || exit 1;
 
-files="$(find . -type f \! -iname '.*')";
+files="$(find . -type f \! -iname '._*' \! -iname '.DS_Store')";
 [ -z "$files" ] && throw "no files in 'files' directory";
 echo "[ ] found $(echo "${files}" | wc -l | awk '{print $1}') files";
 
@@ -15,7 +15,7 @@ cd "${PROJECT_DIR}" || exit 1;
 echo "[ ] pwd: $(pwd)";
 while read -r file; do
   if [ ! -f "$file" ]; then
-    echo "[!] there is not a file: '$dir'";
+    echo "[!] there is not a file: '$file'";
     continue;
   fi
 

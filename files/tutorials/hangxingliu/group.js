@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', function main() {
     allowFreezingColumns: true,
     allowRowReordering: true,
     allowGroupingColumns: true,
-    columnGroupIndicatorPosition: 'left',
+    columnGroupIndicatorPosition: 'right',
+    // rowGroupIndicatorPosition: 'top',
     tree: true,
     debug: false,
     showPerformance: false,
@@ -22,6 +23,21 @@ document.addEventListener('DOMContentLoaded', function main() {
   grid.style.treeGridHeight = 500;
   grid.addEventListener('aftercreategroup', function (ev) {
     if (ev.error) alert(ev.error);
+  });
+  grid.addEventListener('contextmenu', function (e) {
+    e.items.push({
+      title: 'Toggle position of group handler',
+      click: function (ev) {
+        let pos = grid.attributes.columnGroupIndicatorPosition;
+        let pos2 = grid.attributes.rowGroupIndicatorPosition;
+        if (pos === 'left') pos = 'right';
+        else pos = 'left';
+        if (pos2 === 'top') pos2 = 'bottom';
+        else pos2 = 'top';
+        grid.attributes.columnGroupIndicatorPosition = pos;
+        grid.attributes.rowGroupIndicatorPosition = pos2;
+      },
+    });
   });
   window.__debugGrid = grid;
   loadDataSet();
@@ -33,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function main() {
   function afterLoadedData(csv) {
     const parsed = parseData(csv);
     grid.schema = parsed.schema;
-    grid.data = parsed.data;
+    grid.data = parsed.data; //.slice(0, 5);
     grid.groupColumns('RestingBP', 'Cholesterol');
     grid.groupColumns('Age', 'Cholesterol');
     grid.groupColumns('MaxHR', 'ST_Slope');

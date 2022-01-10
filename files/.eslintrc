@@ -18,11 +18,11 @@
   },
   "globals": {
     "chai": true,
+    "assert": true,
     "canvasDatagrid": true
   },
   "rules": {
     "prettier/prettier": 2, // 2 -> error
-    //
     "indent": [
       "warn",
       2,

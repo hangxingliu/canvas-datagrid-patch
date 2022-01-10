@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function main() {
   function afterLoadedData(csv) {
     const parsed = parseData(csv);
     grid.schema = parsed.schema;
-    grid.data = parsed.data; //.slice(0, 5);
+    grid.data = parsed.data; //.slice(0, 6);
     grid.groupColumns('RestingBP', 'Cholesterol');
     grid.groupColumns('Age', 'Cholesterol');
     grid.groupColumns('MaxHR', 'ST_Slope');

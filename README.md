@@ -9,3 +9,9 @@
 - Utils
 - Scripts
 - Configs
+
+## Deploy to CodeSandbox
+
+``` bash
+./csb-deploy.sh codesandbox/feature-420
+```

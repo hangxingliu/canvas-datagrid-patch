@@ -1,6 +1,8 @@
 # Personal settings for Visual Studio Code
 .vscode/settings.json
 
+canvas-datagrid.js
+
 .codesandbox
 .codesandbox.json
 .codesandbox-staging.json

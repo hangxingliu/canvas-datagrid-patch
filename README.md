@@ -1,7 +1,8 @@
 # Patches for Developing Canvas Datagrid Project
 
 ``` bash
-cd container && docker build -t node:14x .
+./container/node14x/build.sh
+./container/codesandbox/build.sh
 ```
 
 - Tests

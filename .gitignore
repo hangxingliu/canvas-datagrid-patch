@@ -1,6 +1,10 @@
 # Personal settings for Visual Studio Code
 .vscode/settings.json
 
+.codesandbox
+.codesandbox.json
+.codesandbox-staging.json
+
 # mac OS files
 .DS_Store
 ._*

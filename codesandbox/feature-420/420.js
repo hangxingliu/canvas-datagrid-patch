@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function main() {
     debug: false,
     showPerformance: false,
     showUnhideColumnsIndicator: true,
+    showUnhideRowsIndicator: true,
   });
   grid.style.height = '100%';
   grid.style.width = '100%';
@@ -32,7 +33,9 @@ document.addEventListener('DOMContentLoaded', function main() {
     parsed.schema[1].hidden = true;
     parsed.schema[2].hidden = true;
     grid.schema = parsed.schema;
-    grid.data = parsed.data; //.slice(0, 6);
+    grid.data = parsed.data.slice(0, 20);
+    grid.hideRows(3, 5);
+    grid.hideRows(10, 15);
   }
   function loadDataSet() {
     const xhr = new XMLHttpRequest();

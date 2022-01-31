@@ -1,5 +1,7 @@
 # Patches for Developing Canvas Datagrid Project
 
+See [Documents](docs/README.md)
+
 ``` bash
 ./container/node14x/build.sh
 ./container/codesandbox/build.sh

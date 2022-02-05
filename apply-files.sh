@@ -39,14 +39,19 @@ while read -r file; do
   [ "$file" == "./archived.list" ] && continue;
   is_archived "$file" && continue;
 
-  dir="$(dirname "${file}")";
-  if [ ! -d "$dir" ]; then
-    echo "[.] creating directory '$dir'";
-    mkdir -v -p "$dir" || exit 1;
+  target_file="$(echo "$file" | sed "s/__noop__//")";
+  target_dir="$(dirname "${target_file}")";
+  if [ ! -d "$target_dir" ]; then
+    echo "[.] creating directory '$target_dir'";
+    mkdir -v -p "$target_dir" || exit 1;
   fi
 
-  echo "[.] apply '${file}'";
-  cp "${FILES_DIR}/${file}" "${file}" || exit 1;
+  if [ "${target_file}" != "${file}" ]; then
+    echo "[.] apply '${file}' => '${target_file}'";
+  else
+    echo "[.] apply '${file}'";
+  fi
+  cp "${FILES_DIR}/${file}" "${target_file}" || exit 1;
   copy_count="$(($copy_count+1))"
 done <<< "${files}";
 

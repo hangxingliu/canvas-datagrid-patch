@@ -14,12 +14,13 @@ echo "[ ] found $(echo "${files}" | wc -l | awk '{print $1}') files";
 cd "${PROJECT_DIR}" || exit 1;
 echo "[ ] pwd: $(pwd)";
 while read -r file; do
-  if [ ! -f "$file" ]; then
-    echo "[!] there is not a file: '$file'";
+  source_file="$(echo "$file" | sed "s/__noop__//")";
+  if [ ! -f "$source_file" ]; then
+    # echo "[!] there is not a file: '$source_file'";
     continue;
   fi
 
-  echo "[.] reverse apply '${file}'";
-  cp "${file}" "${FILES_DIR}/${file}" || exit 1;
+  echo "[.] reverse apply '${source_file}'";
+  cp "${source_file}" "${FILES_DIR}/${file}" || exit 1;
 done <<< "${files}";
 echo "[+] done!";

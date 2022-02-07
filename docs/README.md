@@ -3,7 +3,7 @@
 ## Onboarding
 
 - [How the Grid be Draw](./draw/README.md)
-- [Dat Flow (How does raw data become view data)](./data-flow/README.md)
+- [Data Flow (How does raw data become view data)](./data-flow/README.md)
 
 ## Features
 

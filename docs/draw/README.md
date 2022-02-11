@@ -1,13 +1,17 @@
-# How the Grid be Draw
+---
+author: Liu Yue (@hangxingliu)
+updatedAt: 2022-02-12
+---
+# How the grid is drawn
 
 This document was written based on [version 4.2](https://github.com/TonyGermaneri/canvas-datagrid/tree/4e1e3dbe7ba70a3367bcefa38188af70cbb9f40f)
 
-Most rendering codes of this component are located in `lib/draw.js`.   
+Most rendering code of this component are located in `lib/draw.js`.   
 If you are the first time to read this file,
 you can start reading this file from the line, which defines function `self.draw`.
 (Find it by searching `self.draw =` in your editor)
 
-The codes in `self.draw` function are the rendering process.
+The code in `self.draw` function are the rendering process.
 And there are many util functions above this function.
 
 You can see this function contains more than 2000 lines in your editor,
@@ -15,7 +19,7 @@ and it has many inner functions.
 
 In order to understand and appreciate it. You can search `initDraw();` in your editor
 to find the beginning of the core flow.
-You will see the codes of core flow like these:
+You will see the code of core flow like these:
 
 ``` javascript
 self.ctx.save();
@@ -49,13 +53,13 @@ This document will explain this flow in the following sections.
 
 # initDraw()
 
-The codes in `initDraw` and the codes before are used for these purposes: 
+The code in `initDraw` and the code before are used for these purposes: 
 
 - Trigger `beforedraw` event.
 - Check for no need to draw.
 - Initialize variables.
 
-> Because many developers maintained this project, there are two parts initializing codes in `self.draw`.
+> Because many developers maintained this project, there are two parts initializing code in `self.draw`.
 > - First part is followed the `self.draw = function (internal) {` closely 
 > - Second part is the inner function `initDraw`
 
@@ -116,7 +120,7 @@ And there is a method named `self.getBoundRowIndexFromViewRowIndex` to convert `
 
 ### Offset for drawing
 
-You may see two variables about offsset named `canvasOffsetLeft` and `canvasOffsetTop` in the source codes.   
+You may see two variables about offsset named `canvasOffsetLeft` and `canvasOffsetTop` in the source code.   
 They are used to determine which location of HTML `canvas` element to start rendering whole grid component, because this component has the ability to display embedded grid (aka. child grid).
 
 So please remember to adding `canvasOffsetLeft` or `canvasOffsetTop` to the coordinate values before
@@ -137,7 +141,7 @@ self.ctx.translate(rowGroupsAreaWidth, columnGroupsAreaHeight);
 
 Because this component hasn't grouping feature util version 4.0, 
 we used `ctx.translate` method to leave space for rendering group lines and group toggle icons.
-This way can reduce changes to existing codes.
+This way can reduce changes to existing code.
 
 ## drawFrozenRows()
 
@@ -208,7 +212,19 @@ They draw some borders.
 
 As its name. It draws scroll bars by following property `self.scrollBox` if scroll bar should exist.
 
+
 ## drawGroupArea()
+
+It draws the grouping indicators and lines above column headers and the area on the left side of row headers.
+
+And this inner function uses the following variables to calculating the location of groupding indicators:
+
+- `rowGroupsRectInfo`
+- `rowGroupsFrozenInfo`
+- `columnGroupsRectInfo`
+
+These veriables are calculated from function `drawCell`, but more on that later on.
+
 
 ![screenshot](./screenshot-drawGroupArea.png)
 

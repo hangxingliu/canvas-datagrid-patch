@@ -225,6 +225,103 @@ And this inner function uses the following variables to calculating the location
 
 These veriables are calculated from function `drawCell`, but more on that later on.
 
+There is code to generating the property `self.visibleGroups` in this function. 
+This property is an array, the type of each item is like this: 
+
+``` typescript
+type Item = {
+  type: 'r'|'c', // a group for (r)ows, or a group for (c)olumn
+  collapsed: boolean, // is this group collapsed
+  from: number, // rowIndex or columnOrderIndex
+  to: number,  // rowIndex or columnOrderIndex
+  col?: number, // which column in this group area. only the group for rows has this property.
+  row?: number, // which row in this group area. only the group for columns has this property.
+  x: number,
+  y: number,
+  x2: number,
+  y2: number, // rectangle area (x,y)-(x2,y2)
+}
+```
 
 ![screenshot](./screenshot-drawGroupArea.png)
+
+## drawDebug()
+
+It draws debug text on topest layer of the grid when the value of attribute named `debug` is true.
+
+![screenshot](./screenshot-drawDebug.png)
+
+## drawPerfLines()
+
+
+It draws the box of performance info on topest layer of the grid when the value of attribute named `showPerformance` is true.
+
+![screenshot](./screenshot-drawPerfLines.png)
+
+---
+
+So far, the main flow of rendering is introduced. But we have not introduced an important function that is not at the top level in the main flow.   
+This function is named `drawCell`, it is a higher order function. it returns a function that draws each cell in a row. 
+
+## drawCell(rowData, rowOrderIndex, rowIndex)
+
+Before reading the code in this function, you can find all its references in your editor. You can see these functions used it:
+
+- `drawRowHeader`
+- `drawHeaders`
+- `drawRow`
+- `drawRows`
+
+And the relationship between these functions is like this:
+
+- `drawFrozenRows`
+  - It invokes the function `drawRow` for rendering each frozen row.
+- `drawRows`
+  - It invokes the function `drawRow` for rendering each normal row.
+  - It invokes the function `drawCell` directly for rendering each cell in the blank new row.
+- `drawRow`
+  - It has two places where `drawCell` is invoked. first place is used for rendering normal cell, 
+second place is used for rendering frozen cell.
+- `drawHeaders`
+  - It invokes the function `drawCell` for rendering column headers, the cell gap of column header and
+the corner cell.
+  - It invokes the function `drawRowHeader` for rendering row headers.
+- `drawRowHeader`
+  - It invokes the function `drawCell` for rendering row headers.
+
+Now, we can have a look at the `drawCell` function. The parameters of it can be understood by their names.
+And this function return a render function named `drawEach`:
+
+``` javascript
+function drawEach(header, headerIndex, columnOrderIndex) {
+  // ...
+}
+```
+
+The name of the first parameter named `header` can be confusing. 
+Actually, its type is same as the item of property `self.schema`.
+So you can set `schema[headerIndex]` or `schema[columnIndex]` as its value for the normal cells,
+and create an object similar to schema item as its value for the header cells and corner cells.
+
+Then, here is a list to explain how each property of this parameter affects rendering.
+
+- `title`: It is a preferred text for the column header cell.
+- `name`: It is a property key for extracting value from `rowData` to cell text for normal cells.
+It is an alternative text for column header cells if the property `title` is empty.
+- `type`: It decides how the cell is rendered and formatted. It can be one value of 
+`'string'`, `'html'` and `'canvas-datagrid'`.
+- `style`: It is a string representing the type of cell and the style. etc, `cell`, `rowHeaderCell` ...
+- `width`: It is default width value for the cell.
+  - Related code: `cellWidth = self.sizes.columns[headerIndex] || header.width`
+
+Now, we start explaining the code in the function `drawEach`.
+
+Before drawing the things of the cell, this function sets up the coordinate variables.
+
+- `cx`: current x drawing cursor sub calculation var 
+- `cy`: current y drawing cursor sub calculation var
+
+Then it creates an object named `cell` with many context information. 
+Next, it will prepend this object into `self.visibleCells`.
+And it will ... `rowGroupsRectInfo`, `columnGroupsRectInfo`
 

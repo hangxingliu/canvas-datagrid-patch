@@ -1,6 +1,6 @@
 ---
 author: Liu Yue (@hangxingliu)
-updatedAt: 2022-02-12
+updatedAt: 2022-02-14
 ---
 # How the grid is drawn
 
@@ -322,6 +322,52 @@ Before drawing the things of the cell, this function sets up the coordinate vari
 - `cy`: current y drawing cursor sub calculation var
 
 Then it creates an object named `cell` with many context information. 
-Next, it will prepend this object into `self.visibleCells`.
-And it will ... `rowGroupsRectInfo`, `columnGroupsRectInfo`
+Next, it prepend this object into `self.visibleCells`.
+And it save the information used for drawing group indicators to variable `rowGroupsRectInfo` and `columnGroupsRectInfo`.
+
+After the code above, it assigns the color for the drawing context and calculates the size for the cell.
+Next, it draws the cell's background, the cell's border, the cell's content and components over the cell in sequence.
+
+Finally, it lets the variable `x` plus a value equal to the cell width and the border width.
+Then return the cell's width.
+
+## drawRow(rowOrderIndex, rowIndex)
+
+This method draws the normal cells first. and it draws frozen cells next. 
+So the frozen cells can cover the normal cells.
+
+For normal cells part, it draws from the column whose `columnOrderIndex` is `self.scrollIndexLeft`
+to the last columns. But we break this loop if the variable `x` is greater than the component's width.
+
+Then this method renders all frozen columns. Then it assigns the latest `x` as 
+the value of `self.lastFrozenColumnPixel`.
+
+Before the end, it invokes the method `draw` of the child grid if there is a child grid of this row.
+
+## drawRows()
+
+It clips an area that doesn't contain the area of frozen rows if there are any frozen rows.
+
+## Other instructions
+
+### Where does the value of the variable named `scrollIndexLeft` come from?
+
+It got the value from the method named `self.scroll`. 
+This method is located in the file `events/index.js`.
+
+Similarly, this method assign values to `scrollIndexTop`, `scrollPixelTop` and `scrollIndexLeft`.
+
+And these values are calculated from `self.scrollBox` and `self.scrollCache`. 
+For these two properties, you can read the function named `self.resize` and 
+the function `self.scrollGrid` in the same file.
+
+So from their names, you may have guessed this process:
+
+- The event handler method named `self.resize` builds the size info/cache properties. 
+- The event handler method named `self.scrollGrid` handles mouse events. And it assigns values 
+for the properties of the `self.scrollBox` (Eg: `scrollLeft` and `scrollTop`)
+  - The event handler is used in event handler `self.mousedown` like this: 
+`document.addEventListener('mousemove', self.scrollGrid, false);`
+- The `self.scroll` method is invoked in `self.resize` and other scroll-related methods. And it
+re-calculates the properties for rendering. Then it invokes `self.draw` if the parameter `dontDraw` is not true.
 

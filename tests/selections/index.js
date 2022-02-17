@@ -8,18 +8,38 @@ function setup() {
   let content = fs.readFileSync(src, 'utf8');
   content = content.replace(/export\s+\{/, 'module.exports = {');
   fs.writeFileSync(dest, content);
-};
+}
 
 // simple implementations of chai, mocha:
-const it = (title, callback) => { console.log(`# ${title}`); callback(); }
+const it = (title, callback) => {
+  console.log(`# ${title}`);
+  callback();
+};
 const chai = { assert };
 setup();
 
-const { SelectionType, addToSelections } = require('./util');
+const { SelectionType, getIntersection, addToSelections } = require('./util');
 
 //
 //
 //
+
+console.log(
+  getIntersection(
+    {
+      type: SelectionType.Rows,
+      row0: 10,
+      row1: 20,
+    },
+    {
+      type: SelectionType.Cells,
+      row0: 15,
+      col0: 15,
+      row1: 15,
+      col1: 15,
+    },
+  ),
+);
 
 const selections = [];
 addToSelections(selections, {

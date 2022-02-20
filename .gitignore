@@ -2,6 +2,7 @@
 .vscode/settings.json
 
 canvas-datagrid.js
+canvas-datagrid.debug.js
 
 .codesandbox
 .codesandbox.json

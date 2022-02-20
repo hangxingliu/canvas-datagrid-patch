@@ -13,21 +13,75 @@ const SelectionType = {
   Columns: 3,
 };
 
+const swapProps = (obj, prop0, prop1) => {
+  const t = obj[prop0];
+  obj[prop0] = obj[prop1];
+  obj[prop1] = t;
+};
 const normalizeSelection = (sel) => {
+  if (!sel) return sel;
   switch (sel.type) {
     case SelectionType.SubtractCells:
     case SelectionType.Cells:
-      if (!sel.row1) sel.row1 = sel.row0;
-      if (!sel.col1) sel.col1 = sel.col0;
+      if (typeof sel.row1 !== 'number') sel.row1 = sel.row0;
+      else if (sel.row1 < sel.row0) swapProps(sel, 'row0', 'row1');
+
+      if (typeof sel.col1 !== 'number') sel.col1 = sel.col0;
+      else if (sel.col1 < sel.col0) swapProps(sel, 'col0', 'col1');
+
       break;
     case SelectionType.Rows:
-      if (!sel.row1) sel.row1 = sel.row0;
+      if (typeof sel.row1 !== 'number') sel.row1 = sel.row0;
+      else if (sel.row1 < sel.row0) swapProps(sel, 'row0', 'row1');
+
       break;
     case SelectionType.Columns:
-      if (!sel.col1) sel.col1 = sel.col0;
+      if (typeof sel.col1 !== 'number') sel.col1 = sel.col0;
+      else if (sel.col1 < sel.col0) swapProps(sel, 'col0', 'col1');
+
       break;
   }
   return sel;
+};
+
+const getSelectionFromString = (str) => {
+  if (typeof str !== 'string') return;
+
+  const index = str.indexOf(':');
+  if (index < 0) return;
+
+  const type = str.slice(0, index);
+  const num = str
+    .slice(index + 1)
+    .split(/[,:;-]+/)
+    .map((it) => parseInt(it, 10));
+  switch (type) {
+    case 'cell':
+    case 'cells':
+    case '-cell':
+    case '-cells':
+      return normalizeSelection({
+        type: SelectionType.Cells,
+        row0: num[0],
+        col0: num[1],
+        row1: num[2],
+        col1: num[3],
+      });
+    case 'row':
+    case 'rows':
+      return normalizeSelection({
+        type: SelectionType.Rows,
+        row0: num[0],
+        row1: num[1],
+      });
+    case 'col':
+    case 'cols':
+      return normalizeSelection({
+        type: SelectionType.Columns,
+        col0: num[0],
+        col1: num[1],
+      });
+  }
 };
 
 const getIntersection = (a, b) => {
@@ -61,7 +115,7 @@ const getIntersection = (a, b) => {
       const col1 = Math.min(a.col1, b.col1);
       if (col0 > col1) return;
       return {
-        type: SelectionType.Columns,
+        type: SelectionType.Cells,
         col0,
         row0: a.row0,
         col1,
@@ -126,6 +180,8 @@ const isCellSelected = function (selection, rowIndex, columnIndex) {
 
 module.exports = {
   SelectionType,
+  getSelectionFromString,
+  normalizeSelection,
   addToSelections,
   subtractFromSelections,
   getIntersection,

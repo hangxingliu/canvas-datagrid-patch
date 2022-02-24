@@ -906,7 +906,7 @@ const areSelectionsComplex = (selections) => {
   return selections.findIndex((it) => it.type !== baseType) >= 0;
 };
 
-module.exports = {
+export {
   SelectionType,
   getSelectionFromString,
   normalizeSelection,

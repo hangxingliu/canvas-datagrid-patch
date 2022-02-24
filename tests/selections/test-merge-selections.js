@@ -1,6 +1,6 @@
 const { chai, it } = require('./loader');
 const {
-  concatSelections,
+  mergeSelections,
   normalizeSelection,
   getSelectionFromString,
 } = require('./util');
@@ -10,7 +10,7 @@ const {
 //
 
 const { deepStrictEqual } = chai.assert;
-it('test concatSelections', function () {
+it('test mergeSelections', function () {
   [
     // their types are not the same
     ['rows:10', 'cells:15,15', undefined],
@@ -50,7 +50,7 @@ it('test concatSelections', function () {
     ['cells:0,0-10,10', 'cells:0,10-10,20', 'cells:0,0-10,20'],
   ].forEach(eachTest);
   function eachTest(it) {
-    const msg = `concatSelections(${JSON.stringify(it[0])}, ${JSON.stringify(
+    const msg = `mergeSelections(${JSON.stringify(it[0])}, ${JSON.stringify(
       it[1],
     )}) should be ${JSON.stringify(it[2])}`;
 
@@ -58,9 +58,9 @@ it('test concatSelections', function () {
     const b = getSelectionFromString(it[1]) || normalizeSelection(it[1]);
     const expected = getSelectionFromString(it[2]) || normalizeSelection(it[2]);
 
-    const actual = concatSelections(a, b);
+    const actual = mergeSelections(a, b);
     // changing the order of parameters should not affect the result
-    const actual2 = concatSelections(b, a);
+    const actual2 = mergeSelections(b, a);
 
     deepStrictEqual(actual, expected, msg);
     deepStrictEqual(actual2, expected, msg);

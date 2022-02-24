@@ -2,7 +2,8 @@
 
 ## Onboarding
 
-- [How the Grid be Draw](./draw/README.md)
+- [The build process of this project](./project-build/README.md)
+- [How the Grid is Draw](./draw/README.md)
 - [Data Flow (How does raw data become view data)](./data-flow/README.md)
 
 ## Features

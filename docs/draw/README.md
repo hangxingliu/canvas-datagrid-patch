@@ -51,7 +51,7 @@ self.ctx.restore();
 
 This document will explain this flow in the following sections.
 
-# initDraw()
+## initDraw()
 
 The code in `initDraw` and the code before are used for these purposes: 
 

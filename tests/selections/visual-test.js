@@ -1,3 +1,4 @@
+//@ts-check
 'use strict';
 
 import {
@@ -5,16 +6,51 @@ import {
   SelectionType,
   isCellSelected,
   normalizeSelection,
-  areCellsSelected,
+  getVerboseSelectionStateFromCells,
   removeFromSelections,
   isColumnSelected,
   isRowSelected,
+  getSelectionStateFromCells,
 } from './module.js';
 
 (function main() {
-  const blockSize = 70;
-  const halfBlockSize = blockSize * 0.5;
+  const updatedAt = '2022-02-25';
+  let diagnosis = '';
+  const getHelp = (elapsed, renderInfo) =>
+    [
+      ['#009f4d', `${elapsed}ms (${renderInfo})`],
+      ['#009f4d', diagnosis],
+      ['#000', `Updated at: ${updatedAt}`],
+      ['#7fbb00', ` "g": goto cell`],
+      ['#7fbb00', ` "s": toggle selection id`],
+      ['#7fbb00', ` "t": add a lot of selection`],
+      ['#7fbb00', ` "+/=": zoom in`],
+      ['#7fbb00', ` "-/_": zoom out`],
+    ].filter((it) => it[1]);
+
   const headerSize = 50;
+  const blockSizings = [10, 30, 50, 70, 90, 120, 200, 500, 1000, 2000];
+  let blockSizingPtr = blockSizings.indexOf(70);
+  let blockWidth = 0,
+    blockHeight = 0;
+  const calcBlockSize = () => {
+    blockWidth = blockSizings[blockSizingPtr];
+    blockHeight = blockSizings[blockSizingPtr];
+  };
+  const zoomIn = () => {
+    if (blockSizingPtr < blockSizings.length - 1) {
+      blockSizingPtr++;
+      calcBlockSize();
+    }
+  };
+  const zoomOut = () => {
+    if (blockSizingPtr > 0) {
+      blockSizingPtr--;
+      calcBlockSize();
+    }
+  };
+  calcBlockSize();
+
   const selections = [];
   const selectionColors = [
     '#629aa9',
@@ -34,6 +70,18 @@ import {
 
   /** @type {HTMLCanvasElement} */
   const canvas = document.querySelector('#canvas');
+  /** @type {HTMLDivElement} */
+  const loading = document.querySelector('#loading');
+  /** @type {CanvasRenderingContext2D} */
+  let ctx;
+  /** @type {number} */
+  let canvasRatio;
+  /** @type {number} 1/canvasRatio */
+  let canvasMultiInverseRatio;
+  let isRendering = false;
+  let renderTimer;
+  let isProcssingKey = false;
+  let _render = _renderWithSelectionId;
 
   let baseRow = 0;
   let baseCol = 0;
@@ -41,107 +89,69 @@ import {
   let baseY = 0;
   let offsetX = 0;
   let offsetY = 0;
+  window.addEventListener('resize', render, false);
 
-  let timer;
-  window.addEventListener(
-    'resize',
-    () => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(render, 15);
-    },
-    false,
-  );
+  let _selecting, selecting;
 
-  let ratio;
-  let _selectingCells, selectingCells;
-  let _selectingCols, selectingCols;
-  let _selectingRows, selectingRows;
+  /** @param {number} x */
   const getColFromX = (x) =>
-    Math.min(Math.floor((x - headerSize + offsetX) / blockSize)) + baseCol;
+    Math.min(Math.floor((x - headerSize + offsetX) / blockWidth)) + baseCol;
+
+  /** @param {number} y */
   const getRowFromY = (y) =>
-    Math.min(Math.floor((y - headerSize + offsetY) / blockSize)) + baseRow;
+    Math.min(Math.floor((y - headerSize + offsetY) / blockHeight)) + baseRow;
 
   document.addEventListener('keydown', (ev) => {
     if (!ev) return;
-    // console.log(ev.keyCode)
-    if (ev.keyCode === 84) {
-      // 't'
-      let min = 0;
-      let max = 1000;
-      let maxSize = 10;
-      const random = () => min + Math.floor(Math.random() * (max - min));
-      const randomSize = () => Math.floor(Math.random() * maxSize);
-      const execute = () => {
-        let v = random();
-        addIntoSelections(
-          selections,
-          normalizeSelection({
-            type: SelectionType.Rows,
-            row0: v,
-            row1: v + randomSize(),
-          }),
-        );
-        v = random();
-        addIntoSelections(
-          selections,
-          normalizeSelection({
-            type: SelectionType.Columns,
-            col0: v,
-            col1: v + randomSize(),
-          }),
-        );
-        v = random();
-        let v2 = random();
-        addIntoSelections(
-          selections,
-          normalizeSelection({
-            type: SelectionType.Cells,
-            col0: v,
-            col1: v2,
-            row0: v + randomSize(),
-            row1: v2 + randomSize(),
-          }),
-        );
-      };
-      for (let i = 0; i < 2; i++) execute();
-
-      min = 1001; max = 10000;
-      for (let i = 0; i < 5; i++) execute();
-
-      min = 10001; max = 1000000;
-      for (let i = 0; i < 10; i++) execute();
-
-      min = 1000001; max = 100000000;
-      for (let i = 0; i < 20; i++) execute();
-
-      render();
-      return;
-    }
-    if (ev.keyCode === 71) {
-      // 'g'
-      const _go = prompt('Goto: row,col (Eg:100,200)', '');
-      if (!_go) return;
-      const go = _go.split(/[,;-]+/).map((it) => parseInt(it, 10));
-      if (go[0] >= 0 && go[1] >= 0) {
-        baseRow = go[0];
-        baseCol = go[1];
-        baseX = baseCol * blockSize;
-        baseY = baseRow * blockSize;
-        offsetX = 0;
-        offsetY = 0;
-        render();
-        return;
+    console.log('keydown:', ev.keyCode);
+    if (isProcssingKey) return;
+    isProcssingKey = true;
+    try {
+      switch (ev.keyCode) {
+        case 83: // 's'
+          _render =
+            _render === _renderWithSelectionId
+              ? _renderWithoutSelectionId
+              : _renderWithSelectionId;
+          render();
+          break;
+        case 189: // '-'
+          zoomOut();
+          render();
+          break;
+        case 187: // '+'
+          zoomIn();
+          render();
+          break;
+        case 84: // 't'
+          addRandomSelections();
+          break;
+        case 71: {
+          // 'g'
+          const _go = prompt('Goto: row,col (Eg:100,200)', '');
+          if (!_go) break;
+          const go = _go.split(/[,;-]+/).map((it) => parseInt(it, 10));
+          if (go[0] >= 0 && go[1] >= 0) {
+            baseRow = go[0];
+            baseCol = go[1];
+            baseX = baseCol * blockWidth;
+            baseY = baseRow * blockHeight;
+            offsetX = 0;
+            offsetY = 0;
+            render();
+            break;
+          }
+        }
+        case 27: // ESC
+          _selecting = null;
+          selecting = null;
+          render();
+          break;
       }
+    } catch (error) {
+      console.error(error);
     }
-    if (ev.keyCode === 27) {
-      _selectingCells = null;
-      _selectingCols = null;
-      _selectingRows = null;
-      selectingCells = null;
-      selectingCols = null;
-      selectingRows = null;
-      render();
-    }
+    isProcssingKey = false;
   });
   canvas.addEventListener('wheel', (ev) => {
     let deltaX = ev.deltaX;
@@ -154,148 +164,133 @@ import {
     baseY += deltaY;
     if (baseX < 0) baseX = 0;
     if (baseY < 0) baseY = 0;
-    baseCol = Math.floor(baseX / blockSize);
-    baseRow = Math.floor(baseY / blockSize);
-    offsetX = baseX - baseCol * blockSize;
-    offsetY = baseY - baseRow * blockSize;
+    baseCol = Math.floor(baseX / blockWidth);
+    baseRow = Math.floor(baseY / blockHeight);
+    offsetX = baseX - baseCol * blockWidth;
+    offsetY = baseY - baseRow * blockHeight;
     render();
   });
   canvas.addEventListener('mousedown', (ev) => {
     if (ev.y > headerSize) {
       if (ev.x > headerSize) {
-        _selectingCells = normalizeSelection({
+        _selecting = normalizeSelection({
           type: SelectionType.Cells,
           col0: getColFromX(ev.x),
           row0: getRowFromY(ev.y),
         });
-        selectingCells = _selectingCells;
       } else {
-        _selectingRows = normalizeSelection({
+        _selecting = normalizeSelection({
           type: SelectionType.Rows,
           row0: getRowFromY(ev.y),
         });
-        selectingRows = _selectingRows;
       }
     } else if (ev.x > headerSize) {
-      _selectingCols = normalizeSelection({
+      _selecting = normalizeSelection({
         type: SelectionType.Columns,
         col0: getColFromX(ev.x),
       });
-      selectingCols = _selectingCols;
+    } else {
+      return;
     }
+    selecting = _selecting;
     render();
   });
   canvas.addEventListener('mousemove', (ev) => {
-    if (_selectingCells) {
-      selectingCells = normalizeSelection(
-        Object.assign({}, _selectingCells, {
-          col1: getColFromX(ev.x),
-          row1: getRowFromY(ev.y),
-        }),
-      );
-      render();
-    } else if (_selectingCols) {
-      selectingCols = normalizeSelection(
-        Object.assign({}, _selectingCols, {
-          col1: getColFromX(ev.x),
-        }),
-      );
-      render();
-    } else if (_selectingRows) {
-      selectingRows = normalizeSelection(
-        Object.assign({}, _selectingRows, {
-          row1: getRowFromY(ev.y),
-        }),
-      );
+    if (_selecting) {
+      if (_selecting.type === SelectionType.Cells) {
+        selecting = normalizeSelection(
+          Object.assign({}, _selecting, {
+            col1: getColFromX(ev.x),
+            row1: getRowFromY(ev.y),
+          }),
+        );
+      } else if (_selecting.type === SelectionType.Columns) {
+        selecting = normalizeSelection(
+          Object.assign({}, _selecting, { col1: getColFromX(ev.x) }),
+        );
+      } else if (_selecting) {
+        selecting = normalizeSelection(
+          Object.assign({}, _selecting, { row1: getRowFromY(ev.y) }),
+        );
+      }
       render();
     }
   });
   canvas.addEventListener('mouseup', (ev) => {
-    if (selectingCells) {
-      const { row0, col0, row1, col1 } = selectingCells;
-      const subSelection = areCellsSelected(selections, row0, col0, row1, col1);
-      if (subSelection === true) {
-        removeFromSelections(selections, selectingCells);
-      } else {
-        addIntoSelections(selections, selectingCells);
-      }
-    } else if (selectingCols) {
-      let unselect = true;
-      for (let i = selectingCols.col0; i <= selectingCols.col1; i++) {
-        if (!isColumnSelected(selections, i)) {
-          unselect = false;
+    if (selecting) {
+      let unselect = false;
+      switch (selecting.type) {
+        case SelectionType.Cells: {
+          const subSelection = getSelectionStateFromCells(
+            selections,
+            selecting,
+          );
+          if (subSelection === true) unselect = true;
+          break;
+        }
+        case SelectionType.Columns: {
+          for (let i = selecting.col0; i <= selecting.col1; i++) {
+            if (!isColumnSelected(selections, i)) {
+              unselect = false;
+              break;
+            }
+          }
+          break;
+        }
+        case SelectionType.Rows: {
+          for (let i = selecting.row0; i <= selecting.row1; i++) {
+            if (!isRowSelected(selections, i)) {
+              unselect = false;
+              break;
+            }
+          }
           break;
         }
       }
       if (unselect) {
-        removeFromSelections(selections, selectingCols);
+        removeFromSelections(selections, selecting);
       } else {
-        addIntoSelections(selections, selectingCols);
-      }
-    } else if (selectingRows) {
-      let unselect = true;
-      for (let i = selectingRows.row0; i <= selectingRows.row1; i++) {
-        if (!isRowSelected(selections, i)) {
-          unselect = false;
-          break;
-        }
-      }
-      if (unselect) {
-        removeFromSelections(selections, selectingRows);
-      } else {
-        addIntoSelections(selections, selectingRows);
+        addIntoSelections(selections, selecting);
       }
     }
-    _selectingCells = null;
-    _selectingCols = null;
-    _selectingRows = null;
-    selectingCells = null;
-    selectingCols = null;
-    selectingRows = null;
+    _selecting = null;
+    selecting = null;
     render();
   });
 
   render();
   function render() {
+    if (isRendering) {
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(_render);
+      return;
+    }
+    _render();
+  }
+  function _renderWithSelectionId() {
+    isRendering = true;
     const startAt = performance.now();
-    timer = -1;
-    // console.log(baseX, baseY);
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
 
+    _initDraw();
     const w = canvas.width;
     const h = canvas.height;
-    const ctx = canvas.getContext('2d', { alpha: false });
-    ratio =
-      (window.devicePixelRatio || 1) /
-      (ctx.webkitBackingStorePixelRatio ||
-        ctx.mozBackingStorePixelRatio ||
-        ctx.msBackingStorePixelRatio ||
-        ctx.oBackingStorePixelRatio ||
-        ctx.backingStorePixelRatio ||
-        1);
-    ctx.scale(ratio, ratio);
-    ctx.fillStyle = '#f3f4f7';
-    fillRect(0, 0, w, h);
 
     ctx.strokeStyle = '#52565e';
     ctx.lineWidth = 1;
     let x = headerSize,
       y = headerSize;
 
-    const tmpSelect = [selectingCells, selectingCols, selectingRows].filter(
-      (it) => it,
-    );
-    const maxRows = Math.ceil(h / blockSize) + 3;
-    const maxCols = Math.ceil(w / blockSize) + 3;
-    const sel = areCellsSelected(
-      selections,
-      baseRow,
-      baseCol,
-      baseRow + maxRows,
-      baseCol + maxCols,
-      true,
-    );
+    const halfBlockWidth = blockWidth * 0.5;
+    const halfBlockHeight = blockHeight * 0.5;
+
+    const maxRows = Math.ceil(h / blockHeight) + 3;
+    const maxCols = Math.ceil(w / blockWidth) + 3;
+    const sel = getVerboseSelectionStateFromCells(selections, {
+      row0: baseRow,
+      col0: baseCol,
+      row1: baseRow + maxRows,
+      col1: baseCol + maxCols,
+    });
     const unselectedBlocks = selections.filter(
       (it) => it.type === SelectionType.UnselectedCells,
     );
@@ -305,19 +300,21 @@ import {
       for (let _col = 0; _col <= maxCols; _col++) {
         const col = baseCol + _col;
         const dx = x - offsetX;
-        let tmpSelected = isCellSelected(tmpSelect, row, col);
+        let tmpSelected = selecting
+          ? isCellSelected([selecting], row, col)
+          : null;
         if (tmpSelected) {
           ctx.fillStyle = '#74d2e7';
-          fillRect(dx, dy, blockSize, blockSize);
+          fillRect(dx, dy, blockWidth, blockHeight);
         } else if (sel[_row] && sel[_row][_col]) {
           const selValue = sel[_row][_col];
           ctx.fillStyle = selectionColors[selValue % selectionColors.length];
-          fillRect(dx, dy, blockSize, blockSize);
+          fillRect(dx, dy, blockWidth, blockHeight);
           ctx.fillStyle = '#fff';
           ctx.textAlign = 'center';
-          fillText(`${selValue}`, dx + halfBlockSize, dy + halfBlockSize);
+          fillText(`${selValue}`, dx + halfBlockWidth, dy + halfBlockHeight);
         }
-        strokeRect(dx, dy, blockSize, blockSize);
+        strokeRect(dx, dy, blockWidth, blockHeight);
 
         const isUnselected = unselectedBlocks.findIndex(
           (it) =>
@@ -331,13 +328,99 @@ import {
           ctx.textAlign = 'left';
           fillText(`${isUnselected + 1}`, dx + 2, dy + 20);
         }
-        x += blockSize;
+        x += blockWidth;
       }
       x = headerSize;
-      y += blockSize;
+      y += blockHeight;
     }
+    // draw headers
+    _drawHeaders(w, h, maxRows, maxCols);
+    // draw debug info
+    const elapsed = (performance.now() - startAt).toFixed(2);
+    const cells = (maxRows + 1) * (maxCols + 1);
+    const helpLines = getHelp(elapsed, `ratio=${canvasRatio} cells=${cells}`);
+    _drawDebugInfo(helpLines);
+    isRendering = false;
+  }
+
+  function _renderWithoutSelectionId() {
+    isRendering = true;
+    const startAt = performance.now();
+
+    _initDraw();
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.strokeStyle = '#52565e';
+    ctx.lineWidth = 1;
+    let x = headerSize,
+      y = headerSize;
+
+    const maxRows = Math.ceil(h / blockHeight) + 3;
+    const maxCols = Math.ceil(w / blockWidth) + 3;
+    const sel = getSelectionStateFromCells(selections, {
+      row0: baseRow,
+      col0: baseCol,
+      row1: baseRow + maxRows,
+      col1: baseCol + maxCols,
+    });
+    // console.log('getSelectionStateFromCells:', performance.now() - startAt);
+
+    for (let _row = 0; _row <= maxRows; _row++) {
+      const row = baseRow + _row;
+      const dy = y - offsetY;
+      for (let _col = 0; _col <= maxCols; _col++) {
+        const col = baseCol + _col;
+        const dx = x - offsetX;
+        let tmpSelected = selecting
+          ? isCellSelected([selecting], row, col)
+          : null;
+        if (tmpSelected) {
+          ctx.fillStyle = '#74d2e7';
+          fillRect(dx, dy, blockWidth, blockHeight);
+        } else if (sel === true || (sel[_row] && sel[_row][_col])) {
+          ctx.fillStyle = selectionColors[0];
+          fillRect(dx, dy, blockWidth, blockHeight);
+        }
+        strokeRect(dx, dy, blockWidth, blockHeight);
+        x += blockWidth;
+      }
+      x = headerSize;
+      y += blockHeight;
+    }
+    // console.log('drawCells:', performance.now() - startAt);
 
     // draw headers
+    _drawHeaders(w, h, maxRows, maxCols);
+
+    // draw debug info
+    const elapsed = (performance.now() - startAt).toFixed(2);
+    const cells = (maxRows + 1) * (maxCols + 1);
+    const helpLines = getHelp(elapsed, `ratio=${canvasRatio} cells=${cells}`);
+    _drawDebugInfo(helpLines);
+    isRendering = false;
+  }
+
+  function _initDraw() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    ctx = canvas.getContext('2d', { alpha: false });
+    canvasRatio =
+      (window.devicePixelRatio || 1) /
+      (ctx['webkitBackingStorePixelRatio'] ||
+        ctx['mozBackingStorePixelRatio'] ||
+        ctx['msBackingStorePixelRatio'] ||
+        ctx['oBackingStorePixelRatio'] ||
+        ctx['backingStorePixelRatio'] ||
+        1);
+    canvasMultiInverseRatio = 1 / canvasRatio;
+    ctx.scale(canvasRatio, canvasRatio);
+    // background
+    ctx.fillStyle = '#f3f4f7';
+    fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function _drawHeaders(w, h, maxRows, maxCols) {
     ctx.fillStyle = '#CDE2E7';
     fillRect(0, 0, w, headerSize);
     fillRect(0, 0, headerSize, h);
@@ -345,31 +428,52 @@ import {
     // column headers
     ctx.fillStyle = '#000';
     ctx.textAlign = 'center';
-    ctx.font = `${15 / ratio}px monospace`;
-    for (let col = 0; col <= maxCols; col++)
-      fillText(
-        `${col + baseCol}`,
-        headerSize + col * blockSize + halfBlockSize - offsetX,
-        headerSize * 0.5,
-      );
-    for (let row = 0; row <= maxRows; row++)
+    setFontSize(blockWidth < 50 ? 12 : 15);
+    const colTextForTest = ctx.measureText(`${baseCol + maxCols}`);
+    const colTextWidth = colTextForTest.width * 1.2;
+    let minX = -Infinity;
+    for (let col = 0; col <= maxCols; col++) {
+      const x = headerSize + col * blockWidth + blockWidth * 0.5 - offsetX;
+      if (x < minX) continue;
+      fillText(`${col + baseCol}`, x, headerSize * 0.5);
+      minX = x + colTextWidth * 2;
+    }
+    for (let row = 0; row <= maxRows; row++) {
       fillText(
         `${row + baseRow}`,
         headerSize * 0.5,
-        headerSize + row * blockSize + halfBlockSize - offsetY,
+        headerSize + row * blockHeight + blockHeight * 0.5 - offsetY,
       );
+    }
+  }
 
-    // draw debug info
-    ctx.fillStyle = '#f6f6f5dd';
-    fillRect(0, 0, 200, 350);
-
+  function _drawDebugInfo(helpLines) {
+    let textSize = 15;
+    let lineHeight = textSize * 1.2;
     ctx.textAlign = 'left';
-    const textSize = 12;
-    ctx.font = `${textSize / ratio}px monospace`;
+    setFontSize(textSize);
+
+    ctx.fillStyle = '#f6f6f5dd';
+    fillRect(0, 0, 280, 400);
+    let y = lineHeight;
+    for (let i = 0; i < helpLines.length; i++) {
+      const [fillStyle, text] = helpLines[i];
+      ctx.fillStyle = fillStyle;
+      fillText(text, 2, y);
+      y += lineHeight;
+    }
+
+    textSize = 12;
+    lineHeight = textSize * 1.2;
+    setFontSize(textSize);
+    y += 5;
+    ctx.fillStyle = '#000000';
+    fillText(`${selections.length} selections:`, 2, y);
+    y += lineHeight;
     for (let i = 0; i < selections.length; i++) {
       const sel = selections[i];
       let prefix = 'unknown:';
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = '#000';
       switch (sel.type) {
         case SelectionType.Cells:
           prefix = 'cells: ';
@@ -390,30 +494,129 @@ import {
       if (typeof sel.col0 === 'number') content.push(sel.col0);
       if (typeof sel.row1 === 'number') content.push(sel.row1);
       if (typeof sel.col1 === 'number') content.push(sel.col1);
-      fillText(
-        `[${i + 1}] ${prefix}${content.join(',')}`,
-        2,
-        textSize * (i + 4),
+      fillText(`[${i + 1}] ${prefix}${content.join(',')}`, 2, y);
+      y += lineHeight;
+      if (y > 600) break;
+    }
+  }
+
+  /** @param {number} fontSize */
+  function setFontSize(fontSize) {
+    const px = (fontSize * canvasMultiInverseRatio).toFixed(0);
+    ctx.font = `${px}px monospace`;
+  }
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} w
+   * @param {number} h
+   */
+  function fillRect(x, y, w, h) {
+    ctx.fillRect(
+      x * canvasMultiInverseRatio,
+      y * canvasMultiInverseRatio,
+      w * canvasMultiInverseRatio,
+      h * canvasMultiInverseRatio,
+    );
+  }
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} w
+   * @param {number} h
+   */
+  function strokeRect(x, y, w, h) {
+    ctx.strokeRect(
+      x * canvasMultiInverseRatio,
+      y * canvasMultiInverseRatio,
+      w * canvasMultiInverseRatio,
+      h * canvasMultiInverseRatio,
+    );
+  }
+  /**
+   * @param {string} text
+   * @param {number} x
+   * @param {number} y
+   */
+  function fillText(text, x, y) {
+    ctx.fillText(
+      text,
+      x * canvasMultiInverseRatio,
+      y * canvasMultiInverseRatio,
+    );
+  }
+
+  function addRandomSelections() {
+    const startAt = performance.now();
+    const baseCount = selections.length;
+    let addCount = 0;
+    let min = 0;
+    let max = 1000;
+    let maxSize = 10;
+    const random = () => min + Math.floor(Math.random() * (max - min));
+    const randomSize = () => Math.floor(Math.random() * maxSize);
+    const execute = () => {
+      let v = random();
+      addIntoSelections(
+        selections,
+        normalizeSelection({
+          type: SelectionType.Rows,
+          row0: v,
+          row1: v + randomSize(),
+        }),
       );
-    }
+      v = random();
+      addIntoSelections(
+        selections,
+        normalizeSelection({
+          type: SelectionType.Columns,
+          col0: v,
+          col1: v + randomSize(),
+        }),
+      );
+      v = random();
+      let v2 = random();
+      addIntoSelections(
+        selections,
+        normalizeSelection({
+          type: SelectionType.Cells,
+          col0: v,
+          col1: v2,
+          row0: v + randomSize(),
+          row1: v2 + randomSize(),
+        }),
+      );
+      addCount += 3;
+    };
+    for (let i = 0; i < 2; i++) execute();
 
-    ctx.fillStyle = '#000';
-    fillText('"g" for goto', 2, textSize * 2);
-    fillText('"t" for a lot of selection', 2, textSize * 3);
+    min = 1001;
+    max = 10000;
+    for (let i = 0; i < 5; i++) execute();
 
-    const elapsed = (performance.now() - startAt).toFixed(2) + ' ms';
-    ctx.fillStyle = '#009f4d';
-    fillText(elapsed, 2, textSize);
-    timer = 0;
+    min = 10001;
+    max = 1000000;
+    for (let i = 0; i < 10; i++) execute();
 
-    function fillRect(x, y, w, h) {
-      ctx.fillRect(x / ratio, y / ratio, w / ratio, h / ratio);
-    }
-    function strokeRect(x, y, w, h) {
-      ctx.strokeRect(x / ratio, y / ratio, w / ratio, h / ratio);
-    }
-    function fillText(text, x, y) {
-      ctx.fillText(text, x / ratio, y / ratio);
-    }
+    min = 1000001;
+    max = 100000000;
+    for (let i = 0; i < 20; i++) execute();
+
+    min = 100000001;
+    max = 1000000000;
+    for (let i = 0; i < 30; i++) execute();
+
+    const elapsed = performance.now() - startAt;
+    diagnosis = `${elapsed.toFixed(2)}ms for +${addCount} selections `;
+    diagnosis += `(avg: ${(elapsed / addCount).toFixed(2)}ms)`;
+
+    render();
+    return;
+  }
+  function showLoading() {
+    loading.style.display = 'flex';
+  }
+  function hideLoading() {
+    loading.style.display = 'none';
   }
 })();

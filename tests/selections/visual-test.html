@@ -22,10 +22,27 @@
     body {
       overscroll-behavior-x: none;
     }
+
+    #loading {
+      display: flex;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      color: #004b79;
+      font-size: 30px;
+      background-color: rgba(196, 223, 246, 0.5);
+      font-family: Arial, Helvetica, sans-serif;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    }
   </style>
 </head>
 
 <body>
+  <div id="loading" style="display: none;">loading...</div>
   <canvas id="canvas"></canvas>
   <script type="module" src="./visual-test.js"></script>
 </body>

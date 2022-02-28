@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const targetFile = path.resolve(__dirname, '../../../test/unit/selections.js');
 const head = [
@@ -12,6 +13,7 @@ const head = [
   '  normalizeSelection,',
   '  getIntersection,',
   '  getSelectionFromString,',
+  '  removeFromSelections,',
   '  removePartOfRowsSelection,',
   '  removePartOfCellsSelection,',
   '  removePartOfColumnsSelection,',
@@ -45,3 +47,9 @@ for (const file of files) {
 code.push(tail);
 fs.writeFileSync(targetFile, code.join('\n'));
 console.log(`created '${targetFile}'`);
+
+const eslint = path.resolve(__dirname, '../../../node_modules/.bin/eslint');
+if (fs.existsSync(eslint)) {
+  spawnSync(eslint, ['--no-ignore', '--fix', '--', targetFile], { stdio: ['pipe', 'pipe', 'pipe'] });
+  console.log(`eslint fixed '${targetFile}'`);
+}

@@ -14,7 +14,7 @@ import {
 } from './module.js';
 
 (function main() {
-  const updatedAt = '2022-02-25';
+  const updatedAt = '2022-02-28';
   let diagnosis = '';
   const getHelp = (elapsed, renderInfo) =>
     [
@@ -91,6 +91,8 @@ import {
   let offsetY = 0;
   window.addEventListener('resize', render, false);
 
+  /** @type {{row:number;col:number}} */
+  let hoverCell;
   let _selecting, selecting;
 
   /** @param {number} x */
@@ -196,6 +198,7 @@ import {
     render();
   });
   canvas.addEventListener('mousemove', (ev) => {
+    hoverCell = { col: getColFromX(ev.x), row: getRowFromY(ev.y) };
     if (_selecting) {
       if (_selecting.type === SelectionType.Cells) {
         selecting = normalizeSelection(
@@ -213,8 +216,8 @@ import {
           Object.assign({}, _selecting, { endRow: getRowFromY(ev.y) }),
         );
       }
-      render();
     }
+    render();
   });
   canvas.addEventListener('mouseup', (ev) => {
     if (selecting) {
@@ -226,6 +229,11 @@ import {
             selecting,
           );
           if (subSelection === true) unselect = true;
+          else if (Array.isArray(subSelection)) {
+            const w = selecting.col1 - selecting.col0 + 1;
+            const h = selecting.row1 - selecting.row0 + 1;
+            unselect = isAllItemsTrue(subSelection, w, h);
+          }
           break;
         }
         case SelectionType.Columns: {
@@ -468,6 +476,12 @@ import {
     setFontSize(textSize);
     y += 5;
     ctx.fillStyle = '#000000';
+
+    if (hoverCell)
+      fillText(`hover: row=${hoverCell.row} col=${hoverCell.col}`, 2, y);
+    y += lineHeight;
+    if (selecting) fillText(`selecting: ${getSelectionText(selecting)}`, 2, y);
+    y += lineHeight;
     fillText(`${selections.length} selections:`, 2, y);
     y += lineHeight;
     for (let i = 0; i < selections.length; i++) {
@@ -498,6 +512,36 @@ import {
       y += lineHeight;
       if (y > 600) break;
     }
+  }
+  function getSelectionText(sel) {
+    let prefix = 'unknown:';
+    switch (sel.type) {
+      case SelectionType.Cells:
+        prefix = 'cells: ';
+        break;
+      case SelectionType.UnselectedCells:
+        prefix = '-cells: ';
+        ctx.fillStyle = '#e4002b'; // red
+        break;
+      case SelectionType.Rows:
+        prefix = 'rows: ';
+        break;
+      case SelectionType.Columns:
+        prefix = 'cols: ';
+        break;
+    }
+    const content = [];
+    if (typeof sel.row0 === 'number') content.push(sel.row0);
+    if (typeof sel.col0 === 'number') content.push(sel.col0);
+    if (typeof sel.row1 === 'number') content.push(sel.row1);
+    if (typeof sel.col1 === 'number') content.push(sel.col1);
+    const half = content.length >> 1;
+    return (
+      prefix +
+      content.slice(0, half).join(',') +
+      '-' +
+      content.slice(half).join(',')
+    );
   }
 
   /** @param {number} fontSize */
@@ -618,5 +662,13 @@ import {
   }
   function hideLoading() {
     loading.style.display = 'none';
+  }
+  function isAllItemsTrue(array, w, h) {
+    for (let i = 0; i < h; i++) {
+      const row = array[i];
+      if (!Array.isArray(row)) return false;
+      for (let j = 0; j < w; j++) if (row[j] !== true) return false;
+    }
+    return true;
   }
 })();

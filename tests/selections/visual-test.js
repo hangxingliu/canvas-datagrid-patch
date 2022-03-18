@@ -175,19 +175,19 @@ import {
       if (ev.x > headerSize) {
         _selecting = normalizeSelection({
           type: SelectionType.Cells,
-          col0: getColFromX(ev.x),
-          row0: getRowFromY(ev.y),
+          startColumn: getColFromX(ev.x),
+          startRow: getRowFromY(ev.y),
         });
       } else {
         _selecting = normalizeSelection({
           type: SelectionType.Rows,
-          row0: getRowFromY(ev.y),
+          startRow: getRowFromY(ev.y),
         });
       }
     } else if (ev.x > headerSize) {
       _selecting = normalizeSelection({
         type: SelectionType.Columns,
-        col0: getColFromX(ev.x),
+        startColumn: getColFromX(ev.x),
       });
     } else {
       return;
@@ -200,17 +200,17 @@ import {
       if (_selecting.type === SelectionType.Cells) {
         selecting = normalizeSelection(
           Object.assign({}, _selecting, {
-            col1: getColFromX(ev.x),
-            row1: getRowFromY(ev.y),
+            endColumn: getColFromX(ev.x),
+            endRow: getRowFromY(ev.y),
           }),
         );
       } else if (_selecting.type === SelectionType.Columns) {
         selecting = normalizeSelection(
-          Object.assign({}, _selecting, { col1: getColFromX(ev.x) }),
+          Object.assign({}, _selecting, { endColumn: getColFromX(ev.x) }),
         );
       } else if (_selecting) {
         selecting = normalizeSelection(
-          Object.assign({}, _selecting, { row1: getRowFromY(ev.y) }),
+          Object.assign({}, _selecting, { endRow: getRowFromY(ev.y) }),
         );
       }
       render();
@@ -229,7 +229,7 @@ import {
           break;
         }
         case SelectionType.Columns: {
-          for (let i = selecting.col0; i <= selecting.col1; i++) {
+          for (let i = selecting.startColumn; i <= selecting.endColumn; i++) {
             if (!isColumnSelected(selections, i)) {
               unselect = false;
               break;
@@ -238,7 +238,7 @@ import {
           break;
         }
         case SelectionType.Rows: {
-          for (let i = selecting.row0; i <= selecting.row1; i++) {
+          for (let i = selecting.startRow; i <= selecting.endRow; i++) {
             if (!isRowSelected(selections, i)) {
               unselect = false;
               break;
@@ -286,10 +286,10 @@ import {
     const maxRows = Math.ceil(h / blockHeight) + 3;
     const maxCols = Math.ceil(w / blockWidth) + 3;
     const sel = getVerboseSelectionStateFromCells(selections, {
-      row0: baseRow,
-      col0: baseCol,
-      row1: baseRow + maxRows,
-      col1: baseCol + maxCols,
+      startRow: baseRow,
+      startColumn: baseCol,
+      endRow: baseRow + maxRows,
+      endColumn: baseCol + maxCols,
     });
     const unselectedBlocks = selections.filter(
       (it) => it.type === SelectionType.UnselectedCells,
@@ -318,10 +318,10 @@ import {
 
         const isUnselected = unselectedBlocks.findIndex(
           (it) =>
-            row >= it.row0 &&
-            row <= it.row1 &&
-            col >= it.col0 &&
-            col <= it.col1,
+            row >= it.startRow &&
+            row <= it.endRow &&
+            col >= it.startColumn &&
+            col <= it.endColumn,
         );
         if (isUnselected >= 0) {
           ctx.fillStyle = '#e4002b';
@@ -359,10 +359,10 @@ import {
     const maxRows = Math.ceil(h / blockHeight) + 3;
     const maxCols = Math.ceil(w / blockWidth) + 3;
     const sel = getSelectionStateFromCells(selections, {
-      row0: baseRow,
-      col0: baseCol,
-      row1: baseRow + maxRows,
-      col1: baseCol + maxCols,
+      startRow: baseRow,
+      startColumn: baseCol,
+      endRow: baseRow + maxRows,
+      endColumn: baseCol + maxCols,
     });
     // console.log('getSelectionStateFromCells:', performance.now() - startAt);
 
@@ -490,10 +490,10 @@ import {
           break;
       }
       const content = [];
-      if (typeof sel.row0 === 'number') content.push(sel.row0);
-      if (typeof sel.col0 === 'number') content.push(sel.col0);
-      if (typeof sel.row1 === 'number') content.push(sel.row1);
-      if (typeof sel.col1 === 'number') content.push(sel.col1);
+      if (typeof sel.startRow === 'number') content.push(sel.startRow);
+      if (typeof sel.startColumn === 'number') content.push(sel.startColumn);
+      if (typeof sel.endRow === 'number') content.push(sel.endRow);
+      if (typeof sel.endColumn === 'number') content.push(sel.endColumn);
       fillText(`[${i + 1}] ${prefix}${content.join(',')}`, 2, y);
       y += lineHeight;
       if (y > 600) break;
@@ -561,8 +561,8 @@ import {
         selections,
         normalizeSelection({
           type: SelectionType.Rows,
-          row0: v,
-          row1: v + randomSize(),
+          startRow: v,
+          endRow: v + randomSize(),
         }),
       );
       v = random();
@@ -570,8 +570,8 @@ import {
         selections,
         normalizeSelection({
           type: SelectionType.Columns,
-          col0: v,
-          col1: v + randomSize(),
+          startColumn: v,
+          endColumn: v + randomSize(),
         }),
       );
       v = random();
@@ -580,10 +580,10 @@ import {
         selections,
         normalizeSelection({
           type: SelectionType.Cells,
-          col0: v,
-          col1: v2,
-          row0: v + randomSize(),
-          row1: v2 + randomSize(),
+          startColumn: v,
+          endColumn: v2,
+          startRow: v + randomSize(),
+          endRow: v2 + randomSize(),
         }),
       );
       addCount += 3;

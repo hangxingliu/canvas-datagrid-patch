@@ -1,0 +1,16 @@
+{
+  "name": "experimental-build",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "BSD-3-Clause",
+  "scripts": {
+    "start": "../../node_modules/.bin/webpack serve --open",
+    "build": "../../node_modules/.bin/rollup -c && ../../node_modules/.bin/webpack"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.1.55",
+    "@swc/core": "^1.2.159",
+    "rollup-plugin-swc": "^0.2.1",
+    "swc-loader": "^0.1.15"
+  }
+}

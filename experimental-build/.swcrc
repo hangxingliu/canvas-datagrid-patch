@@ -1,0 +1,21 @@
+{
+  "minify": true,
+  "sourceMaps": true,
+  "env": {
+    "coreJs": 3,
+    "mode": "entry",
+    "targets": "> 0.25%, not dead"
+  },
+  "jsc": {
+    "parser": {
+      "syntax": "typescript"
+    },
+    "loose": true,
+    "minify": {
+      "compress": {
+        "unused": true
+      },
+      "mangle": true
+    }
+  }
+}

@@ -10,9 +10,6 @@ const file = path.resolve(__dirname, '../../lib/draw.js');
 const report = path.resolve(__dirname, 'report.txt');
 const js = fs.readFileSync(file, 'utf8');
 
-const node0 = acorn.parse('self.draw = function a() {}', { ecmaVersion: '2017', sourceType: 'module' });
-console.log(JSON.stringify(node0, null, 2));
-
 const node = acorn.parse(js, { ecmaVersion: '2017', sourceType: 'module' });
 
 /** @type {acorn.Node} */

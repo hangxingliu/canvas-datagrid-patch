@@ -1,10 +1,11 @@
 //@ts-check
 const path = require('path');
+const projectRoot = process.env.PROJECT_ROOT || '../..';
 
 const productionConfig = {
   mode: 'production',
 
-  entry: '../../lib/main.ts',
+  entry: path.resolve(projectRoot, 'lib/main.ts'),
 
   module: {
     rules: [
@@ -19,7 +20,7 @@ const productionConfig = {
     extensions: ['.ts', '.js'],
   },
   output: {
-    path: path.resolve(__dirname, '../../dist'),
+    path: path.resolve(projectRoot, 'dist'),
     library: 'canvasDatagrid',
     libraryTarget: 'umd',
     libraryExport: 'default',
@@ -34,8 +35,8 @@ const developmentConfig = {
   devtool: 'source-map',
   devServer: {
     static: [
-      { directory: path.resolve(__dirname, '../../dist') },
-      { directory: path.resolve(__dirname, '../../tutorials') },
+      { directory: path.resolve(projectRoot, 'dist') },
+      { directory: path.resolve(projectRoot, 'tutorials') },
     ],
     client: {
       overlay: {
@@ -46,7 +47,7 @@ const developmentConfig = {
   },
 
   output: {
-    path: path.resolve(__dirname, '../../dist'),
+    path: path.resolve(projectRoot, 'dist'),
     library: 'canvasDatagrid',
     libraryTarget: 'umd',
     libraryExport: 'default',

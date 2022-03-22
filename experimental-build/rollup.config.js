@@ -1,10 +1,13 @@
+import { resolve as resolvePath } from "path";
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import swc from 'rollup-plugin-swc';
 import commonjs from '@rollup/plugin-commonjs';
 import replace from '@rollup/plugin-replace';
 import clear from 'rollup-plugin-clear';
 
-const input = '../../lib/main.ts';
+const projectRoot = process.env.PROJECT_ROOT || '../..';
+
+const input = resolvePath(projectRoot, 'lib/main.ts');
 const fileName = 'canvas-datagrid';
 const swcConfig = {
   minify: true,
@@ -30,7 +33,7 @@ const swcConfig = {
 export default {
   input,
   plugins: [
-    clear({ targets: ['../../dist'] }),
+    clear({ targets: [resolvePath(projectRoot, 'dist')] }),
     nodeResolve({ extensions: ['.ts', '.js'] }),
     swc(swcConfig),
     replace({
@@ -39,7 +42,7 @@ export default {
     commonjs(),
   ],
   output: {
-    file: `../../dist/${fileName}.module.js`,
+    file: resolvePath(projectRoot, `dist/${fileName}.module.js`),
     sourcemap: true,
   },
 };

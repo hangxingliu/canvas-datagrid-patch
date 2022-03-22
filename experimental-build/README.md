@@ -1,4 +1,4 @@
-# Experimental Build Toolchain
+# Experimental Building Toolchain
 
 <https://swc.rs/>
 

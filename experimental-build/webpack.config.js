@@ -1,11 +1,17 @@
 //@ts-check
+const fs = require('fs');
 const path = require('path');
+
 const projectRoot = process.env.PROJECT_ROOT || '../..';
+if (!fs.existsSync(projectRoot)) throw new Error(`project directory '${projectRoot}' is not existing`);
+
+let entry = path.resolve(projectRoot, 'lib/main.ts');
+if (!fs.existsSync(entry)) entry = path.resolve(projectRoot, 'lib/main.js');
 
 const productionConfig = {
   mode: 'production',
 
-  entry: path.resolve(projectRoot, 'lib/main.ts'),
+  entry,
 
   module: {
     rules: [

@@ -12,6 +12,10 @@ const productionConfig = {
   mode: 'production',
 
   entry,
+  performance: {
+    maxAssetSize: 512 * 1024,
+    maxEntrypointSize: 512 * 1024,
+  },
 
   module: {
     rules: [
@@ -38,7 +42,8 @@ const developmentConfig = {
   ...productionConfig,
 
   mode: 'development',
-  devtool: 'source-map',
+  devtool: 'inline-cheap-source-map',
+
   devServer: {
     static: [
       { directory: path.resolve(projectRoot, 'dist') },

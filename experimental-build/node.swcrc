@@ -1,0 +1,15 @@
+{
+  "sourceMaps": true,
+  "module": {
+    "type": "es6",
+    "noInterop": true
+  },
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "decorators": true,
+      "privateMethod": true
+    },
+    "keepClassNames": true
+  }
+}
